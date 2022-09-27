@@ -1,7 +1,8 @@
 import socket
 host = '127.0.0.1'
 port = 6880
-data = []
+database = {'username': 'password'}
+authmap = {}
 s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 s.bind((host,port))
 s.listen()
@@ -11,20 +12,28 @@ while True:
     if choice == '1':
         username = conn.recv(1024).decode()
         password = conn.recv(1024).decode()
-        data.append(username)
-        data.append(password)
+        database.append(username)
+        database.append(password)
         reply = 'Signup sucessfully'
         conn.sendall(reply.encode())
     elif choice == '2':
         user_1 = conn.recv(1024).decode()
         password_1 = conn.recv(1024).decode()
-        if user_1 == data[0] and password_1 == data[1]:
-            reply = 'Login Successful'
+        reply = 'login failed'
+        if user_1 in database:
+            if password_1 == database[user_1]:
+                reply = 'Login Successful'
+                authmap[conn] = True
+            else:
+                reply = 'Wrong password'
         else:
-            reply = 'login failed'
+            reply = 'Unknown user'
         conn.sendall(reply.encode())
     elif choice == '3':
-        reply = 'Logout Successfully'
+        reply = 'Not Logged in, logout not necessary'
+        if authmap.get(conn, False):
+            del authmap[conn]
+            reply = 'Logout Successfully'
         conn.sendall(reply.encode())
         break
     choice = conn.recv(1024).decode()
